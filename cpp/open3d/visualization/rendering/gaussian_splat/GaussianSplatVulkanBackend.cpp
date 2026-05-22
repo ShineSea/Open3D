@@ -179,14 +179,12 @@ public:
             targets.render_target =
                     resource_mgr.CreateRenderTarget(view_color, targets.depth);
         }
-        view.SetRenderTarget(targets.render_target);
-
         auto* native = view.GetNativeView();
         auto msaa = native->getMultiSampleAntiAliasingOptions();
         msaa.enabled = false;
         native->setMultiSampleAntiAliasingOptions(msaa);
         view.SetPostProcessing(false);
-
+        view.SetRenderTarget(targets.render_target);
         return static_cast<bool>(targets.render_target);
     }
 

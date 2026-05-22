@@ -827,6 +827,12 @@ Widget::DrawResult Window::DrawOnce(bool is_layout_pass) {
     // Set current context
     MakeDrawContextCurrent();  // make sure our ImGUI context is active
     ImGuiIO& io = ImGui::GetIO();
+    if(io.DisplaySize.x < 0 ||io.DisplaySize.y < 0) {
+        // This can happen if the window is minimized. Don't set the
+        // delta time, so that ImGUI won't think that a long time has
+        // passed and trigger things like double-clicks.
+        return Widget::DrawResult::NONE;
+    }
     io.DeltaTime = float(dt_sec);
 
     // Set mouse information

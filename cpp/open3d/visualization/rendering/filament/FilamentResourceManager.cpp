@@ -918,32 +918,61 @@ filament::Texture* FilamentResourceManager::LoadTextureFromImage(
         const std::shared_ptr<geometry::Image>& image, bool srgb) {
     using namespace filament;
 
-    auto retained_img_id = RetainImageForLoading(image);
-    auto texture_settings = GetSettingsFromImage(*image, srgb);
-    auto levels = maxLevelCount(texture_settings.texel_width,
-                                texture_settings.texel_height);
-    bool mipmappable =
-            (texture_settings.image_type == filament::Texture::Type::UBYTE);
-    if (!mipmappable) {
-        levels = 1;
+    if (!image || image->data_.empty()) {
+        return nullptr;
     }
 
-    Texture::PixelBufferDescriptor pb(
-            image->data_.data(), image->data_.size(),
-            texture_settings.image_format, texture_settings.image_type,
-            FreeRetainedImage, (void*)retained_img_id);
+    auto retained_img_id = RetainImageForLoading(image);
+
+    auto texture_settings = GetSettingsFromImage(*image, srgb);
+
+    // 是否允许生成 mipmaps
+    // 当前仅对 UBYTE 类型启用
+    const bool mipmappable =
+            (texture_settings.image_type == filament::Texture::Type::UBYTE);
+
+    // mip level 数量
+    const uint8_t levels = mipmappable
+                                   ? maxLevelCount(
+                                             texture_settings.texel_width,
+                                             texture_settings.texel_height)
+                                   : 1;
+
+    // Texture usage
+    filament::Texture::Usage usage =
+            filament::Texture::Usage::SAMPLEABLE |
+            filament::Texture::Usage::UPLOADABLE;
+
+    if (mipmappable) {
+        usage = usage | filament::Texture::Usage::GEN_MIPMAPPABLE;
+    }
+
+    // 创建 texture
     auto texture = Texture::Builder()
                            .width(texture_settings.texel_width)
                            .height(texture_settings.texel_height)
                            .levels(levels)
                            .format(texture_settings.format)
                            .sampler(Texture::Sampler::SAMPLER_2D)
+                           .usage(usage)
                            .build(engine_);
 
+    // 上传像素数据
+    Texture::PixelBufferDescriptor pb(
+            image->data_.data(),
+            image->data_.size(),
+            texture_settings.image_format,
+            texture_settings.image_type,
+            FreeRetainedImage,
+            (void*)retained_img_id);
+
     texture->setImage(engine_, 0, std::move(pb));
+
+    // 自动生成 mipmaps
     if (mipmappable) {
         texture->generateMipmaps(engine_);
     }
+
     return texture;
 }
 

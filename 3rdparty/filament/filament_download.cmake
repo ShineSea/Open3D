@@ -1,6 +1,6 @@
 include(FetchContent)
 
-set(filament_LIBRARIES filameshio filament filaflat filabridge geometry backend bluegl bluevk ibl image ktxreader meshoptimizer smol-v utils vkshaders)
+set(filament_LIBRARIES filameshio filament filaflat filabridge geometry backend bluegl bluevk ibl image ktxreader meshoptimizer smol-v utils shaders zstd)
 
 if (FILAMENT_PRECOMPILED_ROOT)
     if (EXISTS "${FILAMENT_PRECOMPILED_ROOT}")
@@ -13,8 +13,8 @@ else()
     set(lib_dir lib)
     # Setup download links
     if(WIN32)
-        set(FILAMENT_URL https://github.com/google/filament/releases/download/v1.54.0/filament-v1.54.0-windows.tgz)
-        set(FILAMENT_SHA256 370b85dbaf1a3be26a5a80f60c912f11887748ddd1c42796a83fe989f5805f7b)
+        set(FILAMENT_URL https://github.com/google/filament/releases/download/v1.71.4/filament-v1.71.4-windows.tgz)
+        set(FILAMENT_SHA256 e25dcb830401e3ec76ed0924bbf6aafcd65f3a752c3dd94b2dbfe888c52c13b9)
         if (STATIC_WINDOWS_RUNTIME)
             string(APPEND lib_dir /x86_64/mt)
         else()
