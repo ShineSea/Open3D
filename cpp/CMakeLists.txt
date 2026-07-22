@@ -1,5 +1,5 @@
 add_subdirectory(open3d)
-add_subdirectory(tools)
+#add_subdirectory(tools)
 add_subdirectory(apps)
 if (BUILD_UNIT_TESTS)
     add_subdirectory(tests)

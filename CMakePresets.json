@@ -1,0 +1,47 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": {
+        "BUILD_PYTHON_MODULE": "OFF",
+        "BUILD_WEBRTC": "OFF",
+        "BUILD_EXAMPLES": "OFF",
+        "CMAKE_C_COMPILER_LAUNCHER": "sccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
+        "STATIC_WINDOWS_RUNTIME": "OFF"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows Debug Config",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/Debug"
+      }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows Release Config",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-debug",
+      "configurePreset": "windows-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-release",
+      "configurePreset": "windows-release",
+      "configuration": "Release"
+    }
+  ]
+}

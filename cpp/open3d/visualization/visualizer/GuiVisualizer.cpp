@@ -1170,7 +1170,10 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
         auto UpdateProgress = [this, progressbar](float value) {
             gui::Application::GetInstance().PostToMainThread(
                     this,
-                    [progressbar, value]() { progressbar->SetValue(value); });
+                    [progressbar, value]() { 
+                        utility::LogInfo("“Loading progress: {}%", int(value * 100));
+                        progressbar->SetValue(value); 
+                    });
         };
 
         // clear current model
@@ -1265,6 +1268,7 @@ void GuiVisualizer::LoadGeometry(const std::string &path) {
         if (model_success || geometry || t_geometry) {
             gui::Application::GetInstance().PostToMainThread(
                     this, [this, model_success, geometry, t_geometry]() {
+                        utility::LogInfo("Finished loading. Updating scene.");
                         if (t_geometry) {
                             SetGeometry(t_geometry, model_success);
                         } else {

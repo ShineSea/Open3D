@@ -718,6 +718,8 @@ void Application::RunInThread(std::function<void()> f) {
 
 void Application::PostToMainThread(Window *window, std::function<void()> f) {
     std::lock_guard<std::mutex> lock(impl_->posted_lock_);
+    utility::LogInfo("PostToMainThread: queued={} (total after this push)",
+                     impl_->posted_.size());
     impl_->posted_.emplace_back(window, f);
 }
 

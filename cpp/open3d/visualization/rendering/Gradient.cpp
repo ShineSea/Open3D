@@ -7,7 +7,6 @@
 
 #include "open3d/visualization/rendering/Gradient.h"
 
-#include "open3d/geometry/Image.h"
 #include "open3d/utility/Logging.h"
 #include "open3d/visualization/rendering/Renderer.h"
 
@@ -65,51 +64,63 @@ void Gradient::SetMode(Mode mode) {
     }
 }
 
+std::shared_ptr<geometry::Image> Gradient::GenerateImage() const {
+    auto img = std::make_shared<geometry::Image>();
+
+    if (points_.empty()) {
+        img->Prepare(1, 1, kNChannels, 1);
+        SetPixel(img->data_, 0, {1.0f, 0.0f, 1.0f, 1.0f});  // magenta fallback
+        return img;
+    }
+
+    int n_points = int(points_.size());
+
+    if (mode_ == Mode::kLUT) {
+        // LUT mode: one pixel per point, no interpolation
+        img->Prepare(n_points, 1, kNChannels, 1);
+        for (int i = 0; i < n_points; ++i) {
+            SetPixel(img->data_, i, points_[i].color);
+        }
+    } else {
+        // Gradient mode: smooth interpolation over kNGradientPixels
+        img->Prepare(kNGradientPixels, 1, kNChannels, 1);
+        float n = float(kNGradientPixels - 1);
+        int idx = 0;
+
+        for (int img_idx = 0; img_idx < kNGradientPixels; ++img_idx) {
+            float x = float(img_idx) / n;
+            while (idx < n_points && x > points_[idx].value) {
+                ++idx;
+            }
+
+            if (idx == 0) {
+                SetPixel(img->data_, img_idx, points_[0].color);
+            } else if (idx == n_points) {
+                SetPixel(img->data_,
+                         img_idx,
+                         points_[n_points - 1].color);
+            } else {
+                const auto& p0 = points_[idx - 1];
+                const auto& p1 = points_[idx];
+                float dist = p1.value - p0.value;
+                float w1 = (x - p0.value) / dist;
+                float w0 = 1.0f - w1;
+                Eigen::Vector4f color;
+                color[0] = w0 * p0.color[0] + w1 * p1.color[0];
+                color[1] = w0 * p0.color[1] + w1 * p1.color[1];
+                color[2] = w0 * p0.color[2] + w1 * p1.color[2];
+                color[3] = w0 * p0.color[3] + w1 * p1.color[3];
+                SetPixel(img->data_, img_idx, color);
+            }
+        }
+    }
+
+    return img;
+}
+
 TextureHandle Gradient::GetTextureHandle(Renderer& renderer) {
     if (textures_.find(&renderer) == textures_.end()) {
-        auto img = std::make_shared<geometry::Image>();
-        if (!points_.empty()) {
-            int n_points = int(points_.size());
-            if (mode_ == Mode::kGradient) {
-                img->Prepare(kNGradientPixels, 1, kNChannels, 1);
-                auto n = float(kNGradientPixels - 1);
-                int idx = 0;
-                for (int img_idx = 0; img_idx < kNGradientPixels; ++img_idx) {
-                    auto x = float(img_idx) / n;
-                    while (idx < n_points && x > points_[idx].value) {
-                        idx += 1;
-                    }
-
-                    if (idx == 0) {
-                        SetPixel(img->data_, img_idx, points_[0].color);
-                    } else if (idx == n_points) {
-                        SetPixel(img->data_, img_idx,
-                                 points_[n_points - 1].color);
-                    } else {
-                        auto& p0 = points_[idx - 1];
-                        auto& p1 = points_[idx];
-                        auto dist = p1.value - p0.value;
-                        // Calc weights between 0 and 1
-                        auto w0 = 1.0f - (x - p0.value) / dist;
-                        auto w1 = (x - p0.value) / dist;
-                        auto r = w0 * p0.color[0] + w1 * p1.color[0];
-                        auto g = w0 * p0.color[1] + w1 * p1.color[1];
-                        auto b = w0 * p0.color[2] + w1 * p1.color[2];
-                        auto a = w0 * p0.color[3] + w1 * p1.color[3];
-                        SetPixel(img->data_, img_idx, {r, g, b, a});
-                    }
-                }
-            } else {
-                img->Prepare(n_points, 1, kNChannels, 1);
-                for (int i = 0; i < n_points; ++i) {
-                    SetPixel(img->data_, i, points_[i].color);
-                }
-            }
-        } else {
-            img->Prepare(1, 1, kNChannels, 1);
-            SetPixel(img->data_, 0, {1.0f, 0.0, 1.0f, 1.0f});
-        }
-
+        auto img = GenerateImage();
         textures_[&renderer] = renderer.AddTexture(img);
     }
     return textures_[&renderer];

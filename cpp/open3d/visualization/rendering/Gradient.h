@@ -10,7 +10,7 @@
 #include <Eigen/Core>
 #include <map>
 #include <vector>
-
+#include "open3d/geometry/Image.h"
 #include "open3d/visualization/rendering/RendererHandle.h"
 
 namespace open3d {
@@ -19,25 +19,7 @@ namespace rendering {
 
 class Renderer;
 
-/// Manages a gradient for the unlitGradient shader.
-/// In gradient mode, the array of points specifies points along the gradient,
-/// from 0 to 1 (inclusive). These do need to be evenly spaced.
-/// Simple greyscale:
-///     [ { 0.0, black },
-///       { 1.0, white } ]
-/// Rainbow (note the gaps around green):
-///     [ { 0.000, blue },
-///       { 0.125, cornflower blue },
-///       { 0.250, cyan },
-///       { 0.500, green },
-///       { 0.750, yellow },
-///       { 0.875, orange },
-///       { 1.000, red } ]
-/// The gradient will generate a largish texture, so it should be fairly
-/// smooth, but the boundaries may not be exactly as specified due to
-/// quanitization imposed by the fixed size of the texture.
-///   The points *must* be sorted from the smallest value to the largest.
-/// The values must be in the range [0, 1].
+
 class Gradient {
 public:
     struct Point {
@@ -62,6 +44,12 @@ public:
     Mode GetMode() const;
     void SetMode(Mode mode);
 
+    /// Generates the gradient as a 512x1 RGBA8 Image.
+    /// Pure CPU interpolation, no GPU dependency.
+    std::shared_ptr<geometry::Image> GenerateImage() const;
+
+
+    /// Legacy alias for CreateTexture().
     TextureHandle GetTextureHandle(Renderer& renderer);
 
 private:

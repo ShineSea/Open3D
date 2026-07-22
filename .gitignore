@@ -27,6 +27,7 @@ cmake-build-release/
 util/pip_package/dist/
 doxygen/
 node_modules/
+install/
 
 # Editor files
 *.*~
@@ -91,3 +92,4 @@ docs/Doxyfile
 docs/getting_started.rst
 docs/docker.rst
 docs/tensorboard.md
+
